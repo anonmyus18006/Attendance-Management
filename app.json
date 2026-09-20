@@ -1,0 +1,9 @@
+{
+  "name": "GHSFatehpuriaNKSMA",
+  "displayName": "GHS Fatehpuria NK - SMA",
+  "version": "1.0.0",
+  "android": {
+    "package": "com.ghsfatehpuriank.sma",
+    "versionCode": 1
+  }
+}

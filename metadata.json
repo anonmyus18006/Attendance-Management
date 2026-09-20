@@ -1,0 +1,6 @@
+{
+  "name": "GHS Fatehpuria NK - SMA",
+  "description": "Offline-first React Native Android school student information and attendance management system with local database, PDF export, JSON backup, and 8:00 AM attendance reminder notifications.",
+  "requestFramePermissions": ["notifications"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
