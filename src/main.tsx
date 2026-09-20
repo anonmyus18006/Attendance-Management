@@ -1,10 +1,8 @@
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
-import './index.css';
+import { AppRegistry } from 'react-native';
+import App from './App';
+import appConfig from '../app.json';
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);
+// Native React Native Application Entry Point
+AppRegistry.registerComponent(appConfig.name, () => App);
+
+export default App;

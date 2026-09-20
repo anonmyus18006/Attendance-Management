@@ -1,4 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import {
+  SafeAreaView,
+  View,
+  Text,
+  StyleSheet,
+  StatusBar,
+  ScrollView,
+  Pressable,
+} from 'react-native';
 import { AndroidStatusBar } from './components/common/AndroidStatusBar';
 import { AndroidNavBar, NavigationTab } from './components/common/AndroidNavBar';
 import { TopBar } from './components/common/TopBar';
@@ -20,7 +29,6 @@ import { ConfirmDialog } from './components/common/ConfirmDialog';
 import { useDatabase } from './hooks/useDatabase';
 import { NotificationService, ScheduledReminder } from './services/notificationService';
 import { Student, SchoolClass, Section, Teacher } from './types';
-import { Bell, X, ShieldAlert } from 'lucide-react';
 
 export default function App() {
   const db = useDatabase();
@@ -138,12 +146,9 @@ export default function App() {
   const sessionSection = sections.find(s => s.id === sessionSectionId) || sections[0];
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-900 flex justify-center items-start sm:p-4 font-sans antialiased selection:bg-blue-200">
-      {/* Mobile Frame Container: styled like an Android device */}
-      <div className="w-full max-w-md bg-slate-100 min-h-screen sm:min-h-[850px] sm:max-h-[920px] sm:rounded-3xl shadow-2xl flex flex-col overflow-hidden border sm:border-slate-700/60 relative">
-        {/* Android Status Bar */}
-        <AndroidStatusBar isOfflineMode={true} />
-
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+      <View style={styles.contentWrapper}>
         {/* Top Header Bar */}
         <TopBar
           schoolSettings={schoolSettings}
@@ -160,12 +165,10 @@ export default function App() {
           onBack={activeSubView !== 'none' ? handleBackToMain : undefined}
           onToggleLock={() => {
             if (appSettings.isStudentEditLocked) {
-              // Unlock prompt
               executeGuardedAction(() => {
                 db.updateAppSettings({ isStudentEditLocked: false });
               });
             } else {
-              // Directly lock
               db.updateAppSettings({ isStudentEditLocked: true });
             }
           }}
@@ -177,39 +180,39 @@ export default function App() {
 
         {/* In-App Toast Notification Banner (8:00 AM Reminder Simulator) */}
         {activeToastReminder && (
-          <div className="bg-blue-900 text-white p-3 mx-3 mt-2 rounded-xl shadow-lg border border-blue-700 flex items-start justify-between z-30 animate-in slide-in-from-top duration-300">
-            <div className="flex items-start space-x-2.5">
-              <div className="p-1.5 bg-blue-800 rounded-lg text-amber-300 shrink-0 mt-0.5">
-                <Bell className="w-4 h-4" />
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">
+          <View style={styles.toastBanner}>
+            <View style={styles.toastContent}>
+              <View style={styles.toastIconBox}>
+                <Text style={styles.toastIconText}>🔔</Text>
+              </View>
+              <View style={styles.toastTextBox}>
+                <View style={styles.toastBadgeRow}>
+                  <Text style={styles.toastBadgeTitle}>
                     Attendance Reminder ({activeToastReminder.timeStr})
-                  </span>
-                  <span className="text-[9px] bg-emerald-500/20 text-emerald-300 px-1.5 rounded-sm">
+                  </Text>
+                  <Text style={styles.toastBadgeStatus}>
                     {activeToastReminder.status}
-                  </span>
-                </div>
-                <p className="text-xs font-bold text-white mt-0.5">
+                  </Text>
+                </View>
+                <Text style={styles.toastReason}>
                   {activeToastReminder.reason || 'Class attendance is ready to be taken.'}
-                </p>
-                <p className="text-[11px] text-blue-200">
+                </Text>
+                <Text style={styles.toastTeacher}>
                   Teacher: {activeToastReminder.teacherName}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={() => setActiveToastReminder(null)}
-              className="p-1 text-blue-300 hover:text-white rounded-md"
+                </Text>
+              </View>
+            </View>
+            <Pressable
+              onPress={() => setActiveToastReminder(null)}
+              style={styles.toastCloseBtn}
             >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
+              <Text style={styles.toastCloseText}>✕</Text>
+            </Pressable>
+          </View>
         )}
 
         {/* Main Scrollable Content Area */}
-        <main className="flex-1 overflow-y-auto p-3.5 space-y-4 pb-20 safe-area-bottom">
+        <ScrollView style={styles.scrollArea} contentContainerStyle={styles.scrollContent}>
           {/* Subview 1: Roll-by-Roll Attendance Session */}
           {activeSubView === 'attendanceSession' && sessionClass && sessionSection && (
             <AttendanceSession
@@ -232,21 +235,16 @@ export default function App() {
 
           {/* Subview 3: School Holiday Calendar Manager */}
           {activeSubView === 'holidays' && (
-            <div className="space-y-3">
-              <HolidayManager
-                holidays={holidays}
-                onHolidaysChange={() => {}}
-              />
-            </div>
+            <HolidayManager
+              holidays={holidays}
+              onHolidaysChange={() => {}}
+            />
           )}
 
           {/* Main Tab 1: Dashboard */}
           {activeSubView === 'none' && currentTab === 'dashboard' && (
-            <div className="space-y-3.5">
-              {/* Live Asia/Kolkata Clock Widget */}
+            <View style={styles.tabContent}>
               <LiveClockWidget />
-
-              {/* Teacher In-Charge Widget */}
               <TeacherInfoWidget
                 currentTeacher={activeTeacher}
                 currentClass={activeTeacherClass}
@@ -256,15 +254,11 @@ export default function App() {
                 sections={sections}
                 onSelectAssignment={teacherId => setSelectedTeacherId(teacherId)}
               />
-
-              {/* Attendance Carousel / Slider */}
               <AttendanceSlider
                 classes={classes}
                 sections={sections}
                 onTakeAttendance={handleStartAttendance}
               />
-
-              {/* Quick Actions Grid */}
               <QuickActionsGrid
                 onTakeAttendance={() =>
                   handleStartAttendance(
@@ -278,7 +272,7 @@ export default function App() {
                 onOpenHolidays={() => setActiveSubView('holidays')}
                 onOpenSummary={() => setActiveSubView('todaySummary')}
               />
-            </div>
+            </View>
           )}
 
           {/* Main Tab 2: SIMS Register */}
@@ -313,18 +307,16 @@ export default function App() {
               onRefresh={() => {}}
             />
           )}
-        </main>
+        </ScrollView>
 
         {/* Android Bottom Navigation Bar */}
         {activeSubView === 'none' && (
-          <div className="absolute bottom-0 left-0 right-0">
+          <View style={styles.bottomNavContainer}>
             <AndroidNavBar currentTab={currentTab} onTabChange={setCurrentTab} />
-          </div>
+          </View>
         )}
 
         {/* --- MODALS & DIALOGS --- */}
-
-        {/* Master PDF Export Modal */}
         <MasterPdfExportModal
           isOpen={isPdfModalOpen}
           classes={classes}
@@ -332,7 +324,6 @@ export default function App() {
           onClose={() => setIsPdfModalOpen(false)}
         />
 
-        {/* Student Profile Card Modal */}
         <StudentProfileModal
           student={selectedStudentForProfile}
           classObj={classes.find(c => c.id === selectedStudentForProfile?.classId)}
@@ -342,7 +333,6 @@ export default function App() {
           onDelete={handlePromptDeleteStudent}
         />
 
-        {/* Add / Edit Student Modal */}
         <StudentFormModal
           isOpen={isStudentFormOpen}
           editingStudent={editingStudent}
@@ -352,12 +342,9 @@ export default function App() {
             setIsStudentFormOpen(false);
             setEditingStudent(null);
           }}
-          onSaved={() => {
-            // refresh happens automatically via useDatabase()
-          }}
+          onSaved={() => {}}
         />
 
-        {/* Password Prompt Dialog for Student Edit Lock */}
         <PasswordDialog
           isOpen={isPasswordPromptOpen}
           title="Security Authorization Required"
@@ -376,7 +363,6 @@ export default function App() {
           }}
         />
 
-        {/* Delete Student Confirmation Dialog */}
         <ConfirmDialog
           isOpen={!!studentToDelete}
           title="Delete Student Record"
@@ -386,7 +372,106 @@ export default function App() {
           onConfirm={handleConfirmDeleteStudent}
           onCancel={() => setStudentToDelete(null)}
         />
-      </div>
-    </div>
+      </View>
+    </SafeAreaView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#0f172a',
+  },
+  contentWrapper: {
+    flex: 1,
+    backgroundColor: '#f8fafc',
+    position: 'relative',
+  },
+  toastBanner: {
+    backgroundColor: '#1e3a8a',
+    marginHorizontal: 12,
+    marginTop: 8,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#1d4ed8',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    zIndex: 30,
+    elevation: 4,
+  },
+  toastContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    flex: 1,
+  },
+  toastIconBox: {
+    padding: 6,
+    backgroundColor: '#1e40af',
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  toastIconText: {
+    fontSize: 14,
+  },
+  toastTextBox: {
+    flex: 1,
+  },
+  toastBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  toastBadgeTitle: {
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: '#93c5fd',
+    textTransform: 'uppercase',
+  },
+  toastBadgeStatus: {
+    fontSize: 9,
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    color: '#6ee7b7',
+    paddingHorizontal: 6,
+    paddingVertical: 1,
+    borderRadius: 3,
+  },
+  toastReason: {
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#ffffff',
+    marginTop: 2,
+  },
+  toastTeacher: {
+    fontSize: 11,
+    color: '#bfdbfe',
+    marginTop: 2,
+  },
+  toastCloseBtn: {
+    padding: 4,
+    marginLeft: 8,
+  },
+  toastCloseText: {
+    fontSize: 14,
+    color: '#93c5fd',
+    fontWeight: 'bold',
+  },
+  scrollArea: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 14,
+    paddingBottom: 90,
+  },
+  tabContent: {
+    gap: 14,
+  },
+  bottomNavContainer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+  },
+});
+
